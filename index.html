@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Películas | StreamDB</title>
+    <style>
+        /* Estilos básicos de la página */
+        body {
+            background-color: #0f172a; /* Azul muy oscuro tipo cine */
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        /* Contenedor responsivo del Video */
+        .video-wrapper {
+            width: 100%;
+            max-width: 900px; /* Tamaño máximo en PC */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* Relación de aspecto 16:9 */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        .info-peli {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Reproductor de Película</h1>
+
+    <div class="video-wrapper">
+        <div class="video-container">
+            <!-- En tu frontend real, el ID (tt0172495) vendrá de tu base de datos -->
+            <iframe 
+                src="https://streamimdb.ru/embed/movie/tt0172495" 
+                allowfullscreen="true"
+                scrolling="no"
+                referrerpolicy="origin">
+            </iframe>
+        </div>
+    </div>
+
+    <div class="info-peli">
+        <p>ID IMDB: <strong>tt0172495</strong> | Cargando desde servidor externo</p>
+    </div>
+
+</body>
+</html>
