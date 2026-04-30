@@ -3,80 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor de Películas | StreamDB</title>
+    <title>Peliskal | Premium Streaming</title>
+    <link rel="icon" href="peliskal-logo.webp" type="image/x-icon">
     <style>
-        /* Estilos básicos de la página */
+        :root {
+            --bg-color: #040714;
+            --apple-blur: rgba(22, 22, 23, 0.85);
+            --accent: #0071e3;
+            --text: #f5f5f7;
+            --card-radius: 12px;
+        }
+
         body {
-            background-color: #0f172a; /* Azul muy oscuro tipo cine */
-            color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
             margin: 0;
-            padding: 20px;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        h1 {
-            margin-bottom: 20px;
-            font-weight: 300;
+        /* --- NAVIGATION & SEARCH --- */
+        nav {
+            position: fixed;
+            top: 0; width: 100%; min-height: 70px;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 10px 5%; z-index: 2000; box-sizing: border-box;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            transition: 0.3s;
         }
 
-        /* Contenedor responsivo del Video */
-        .video-wrapper {
+        nav.scrolled {
+            background: var(--apple-blur);
+            backdrop-filter: blur(20px) saturate(180%);
+        }
+
+        .nav-top {
             width: 100%;
-            max-width: 900px; /* Tamaño máximo en PC */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
-            overflow: hidden;
-            background-color: #000;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
         }
 
-        .video-container {
-            position: relative;
-            padding-bottom: 56.25%; /* Relación de aspecto 16:9 */
-            height: 0;
-            overflow: hidden;
+        .logo { font-size: 1.4rem; font-weight: 800; letter-spacing: 3px; color: white; text-decoration: none; }
+
+        .search-wrapper { 
+            width: 100%; 
+            max-width: 600px; 
+            position: relative; 
+            margin: 0 auto;
+        }
+        
+        #search {
+            width: 100%; 
+            padding: 12px 20px; 
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.2); 
+            background: rgba(255,255,255,0.1);
+            color: white; outline: none; font-size: 1rem;
+            box-sizing: border-box;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .video-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
+        #search:focus {
+            background: rgba(255,255,255,0.2);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 113, 227, 0.4);
         }
 
-        .info-peli {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 0.9rem;
-            color: #94a3b8;
+        .search-preview {
+            position: absolute; top: 55px; width: 100%; 
+            background: var(--apple-blur); backdrop-filter: blur(25px);
+            border-radius: 15px; display: none; max-height: 400px;
+            overflow-y: auto; z-index: 3000; border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* --- HERO ACTUALIZADO CON BOTONES --- */
+        .hero {
+            height: 80vh; width: 100%; position: relative;
+            display: flex; align-items: center; padding: 0 5%;
+            background-size: cover; background-position: center;
+            transition: background-image 0.8s ease-in-out; box-sizing: border-box;
+        }
+        .hero::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 60%;
+            background: linear-gradient(to top, var(--bg-color) 10%, transparent);
+        }
+        
+        .hero-nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.1); color: white; border: none;
+            width: 50px; height: 50px; border-radius: 50%; cursor: pointer;
+            z-index: 100; backdrop-filter: blur(10px); transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+        .hero-nav-btn:hover { background: var(--accent); }
+        .hero-prev { left: 20px; }
+        .hero-next { right: 20px; }
+
+        .hero-content { z-index: 10; max-width: 600px; }
+        .hero-title { font-size: clamp(1.8rem, 5vw, 3.5rem); margin: 0; font-weight: 800; }
+        
+        .btn-watch {
+            background: white; color: black; border: none; padding: 14px 35px;
+            border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 20px;
+            font-size: 1rem; transition: 0.3s;
+        }
+        .btn-watch:hover { transform: scale(1.05); background: var(--accent); color: white; }
+
+        /* --- CARRUSELES --- */
+        .row { position: relative; margin: 40px 0; padding: 0 5%; }
+        .row-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 15px; color: #a1a1a6; }
+        
+        .carousel-wrapper { position: relative; display: flex; align-items: center; }
+
+        .carousel-track {
+            display: flex; overflow-x: auto; scroll-behavior: smooth;
+            gap: 18px; padding: 15px 0; scrollbar-width: none;
+        }
+        .carousel-track::-webkit-scrollbar { display: none; }
+
+        .nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0,0,0,0.5); color: white; border: none;
+            width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
+            z-index: 100; backdrop-filter: blur(10px); transition: 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0;
+        }
+        .row:hover .nav-btn { opacity: 1; }
+        .nav-btn:hover { background: var(--accent); scale: 1.1; }
+        .prev-btn { left: 10px; }
+        .next-btn { right: 10px; }
+
+        .card {
+            flex: 0 0 auto; width: 200px; aspect-ratio: 2/3;
+            border-radius: var(--card-radius); position: relative;
+            overflow: hidden; cursor: pointer; transition: 0.4s;
+        }
+        .card:hover { transform: translateY(-10px); }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .card-info {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding: 25px 10px 10px;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        }
+        .card-title { font-size: 0.85rem; font-weight: 600; text-align: center; }
+
+        @media (max-width: 768px) {
+            .nav-btn, .hero-nav-btn { display: none; }
+            .card { width: 140px; }
+            .hero { height: 60vh; }
+            .nav-top { flex-direction: column; gap: 10px; }
+            .search-wrapper { width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Reproductor de Película</h1>
+    <nav id="navbar">
+        <div class="nav-top">
+            <a href="#" class="logo">PELISKAL</a>
+            <div class="search-wrapper">
+                <input type="text" id="search" placeholder="Buscar películas o series..." autocomplete="off">
+                <div id="search-preview" class="search-preview"></div>
+            </div>
+            <div style="width: 100px; text-align: right;" class="desktop-only">
+                <a href="explorar.html" style="color:white; text-decoration:none; font-size:0.8rem; opacity:0.7;">Explorar</a>
+            </div>
+        </div>
+    </nav>
 
-    <div class="video-wrapper">
-        <div class="video-container">
-            <!-- En tu frontend real, el ID (tt0172495) vendrá de tu base de datos -->
-            <iframe 
-                src="https://streamimdb.ru/embed/movie/tt0172495" 
-                allowfullscreen="true"
-                scrolling="no"
-                referrerpolicy="origin">
-            </iframe>
+    <section class="hero" id="hero">
+        <button class="hero-nav-btn hero-prev" onclick="changeHero(-1)">❮</button>
+        <button class="hero-nav-btn hero-next" onclick="changeHero(1)">❯</button>
+        <div id="hero-content" class="hero-content"></div>
+    </section>
+
+    <div class="row">
+        <h2 class="row-title">Populares en Peliskal</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-popular')">❮</button>
+            <div class="carousel-track" id="track-popular"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-popular')">❯</button>
         </div>
     </div>
 
-    <div class="info-peli">
-        <p>ID IMDB: <strong>tt0172495</strong> | Cargando desde servidor externo</p>
+    <div class="row">
+        <h2 class="row-title">Agregadas Recientemente</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-recent')">❮</button>
+            <div class="carousel-track" id="track-recent"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-recent')">❯</button>
+        </div>
     </div>
 
+    <script>
+        let moviesDB = [];
+        let heroList = [];
+        let currentHeroIdx = 0;
+        let heroTimer;
+
+        async function init() {
+            try {
+                const res = await fetch('db_completa_imdb.jsonl');
+                const text = await res.text();
+                moviesDB = text.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
+
+                // Configuración inicial
+                heroList = [...moviesDB].sort((a,b) => b.popularity - a.popularity).slice(0, 8);
+                renderHero();
+                startHeroTimer();
+
+                renderTrack('track-popular', [...moviesDB].sort((a,b) => b.popularity - a.popularity).slice(0, 18));
+                renderTrack('track-recent', [...moviesDB].reverse().slice(0, 18));
+            } catch (e) { console.error(e); }
+        }
+
+        function renderHero() {
+            const m = heroList[currentHeroIdx];
+            const heroEl = document.getElementById('hero');
+            heroEl.style.backgroundImage = `linear-gradient(to right, #040714 15%, transparent 85%), url(https://image.tmdb.org/t/p/original${m.backdrop})`;
+            document.getElementById('hero-content').innerHTML = `
+                <h1 class="hero-title">${m.title}</h1>
+                <p style="color:#a1a1a6; margin: 20px 0; max-width:500px;">${m.overview.substring(0, 160)}...</p>
+                <button class="btn-watch" onclick="verDetalle('${m.id_tmdb}')">▶ Ver Película</button>
+            `;
+        }
+
+        function changeHero(dir) {
+            clearInterval(heroTimer);
+            currentHeroIdx = (currentHeroIdx + dir + heroList.length) % heroList.length;
+            renderHero();
+            startHeroTimer();
+        }
+
+        function startHeroTimer() {
+            heroTimer = setInterval(() => {
+                currentHeroIdx = (currentHeroIdx + 1) % heroList.length;
+                renderHero();
+            }, 7000);
+        }
+
+        function renderTrack(id, list) {
+            document.getElementById(id).innerHTML = list.map(m => `
+                <div class="card" onclick="verDetalle('${m.id_tmdb}')">
+                    <img src="https://image.tmdb.org/t/p/w500${m.poster}" loading="lazy">
+                    <div class="card-info"><div class="card-title">${m.title}</div></div>
+                </div>
+            `).join('');
+        }
+
+        function scrollLeftBtn(id) { document.getElementById(id).scrollLeft -= 500; }
+        function scrollRightBtn(id) { document.getElementById(id).scrollLeft += 500; }
+
+        const searchInput = document.getElementById('search');
+        const preview = document.getElementById('search-preview');
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            if (term.length < 2) { preview.style.display = 'none'; return; }
+            const res = moviesDB.filter(m => m.title.toLowerCase().includes(term)).slice(0, 6);
+            preview.style.display = 'block';
+            preview.innerHTML = res.map(m => `
+                <div style="display:flex; align-items:center; gap:15px; padding:12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);" onclick="verDetalle('${m.id_tmdb}')">
+                    <img src="https://image.tmdb.org/t/p/w92${m.poster}" width="40" style="border-radius:4px">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9rem;">${m.title}</div>
+                        <div style="font-size:0.75rem; color:#a1a1a6;">${m.release_year}</div>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        function verDetalle(id) {
+            const m = moviesDB.find(x => x.id_tmdb == id);
+            localStorage.setItem('currentMovie', JSON.stringify(m));
+            window.location.href = 'detalle.html';
+        }
+
+        window.onscroll = () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 30) nav.classList.add('scrolled');
+            else nav.classList.remove('scrolled');
+        };
+
+        init();
+    </script>
 </body>
 </html>
