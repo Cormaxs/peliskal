@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Explorar | Peliskal</title>
+    <meta name="description" content="Explora el catálogo completo de películas y series en Peliskal. Filtra por tipo y encuentra tu próximo entretenimiento.">
+    <meta name="keywords" content="explorar, catálogo, películas, series, Peliskal">
+    <meta name="author" content="Peliskal">
     <link rel="stylesheet" href="style.css">
      <link rel="icon" href="peliskal-logo.webp" type="image/x-icon">
     <style>
         .explore-container { padding: 0 5%; max-width: 1400px; margin: 0 auto; }
-        .filter-bar { display: flex; gap: 15px; margin-bottom: 30px; }
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
         .tab-btn {
             padding: 10px 25px; border-radius: 20px; border: none;
             background: rgba(255,255,255,0.1); color: white; cursor: pointer; transition: 0.3s;
@@ -25,6 +28,15 @@
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5GHP328QNM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5GHP328QNM');
+</script>
 <body>
 
     <nav id="navbar" class="scrolled">
@@ -43,6 +55,11 @@
             <button class="tab-btn active" onclick="filterData('all', this)">Todos</button>
             <button class="tab-btn" onclick="filterData('movie', this)">Películas</button>
             <button class="tab-btn" onclick="filterData('tv', this)">Series</button>
+            <button class="tab-btn" onclick="filterData('genre-28', this)">Acción</button>
+            <button class="tab-btn" onclick="filterData('genre-35', this)">Comedia</button>
+            <button class="tab-btn" onclick="filterData('genre-18', this)">Drama</button>
+            <button class="tab-btn" onclick="filterData('genre-27', this)">Terror</button>
+            <button class="tab-btn" onclick="filterData('genre-878', this)">Ciencia Ficción</button>
         </div>
 
         <div class="grid" id="explore-grid"></div>
@@ -50,16 +67,19 @@
 
     <script src="main.js"></script>
     <script>
-        let currentType = 'all';
+        let currentList = [];
+        let loadedCount = 12;
 
         async function initExplore() {
             await loadDatabase(); // Función en main.js
-            renderExplore(moviesDB);
+            currentList = moviesDB.sort((a,b) => b.release_year - a.release_year);
+            renderExplore();
         }
 
-        function renderExplore(list) {
+        function renderExplore() {
             const grid = document.getElementById('explore-grid');
-            grid.innerHTML = list.map(m => `
+            const toRender = currentList.slice(0, loadedCount);
+            grid.innerHTML = toRender.map(m => `
                 <div class="card" onclick="verDetalle('${m.id_tmdb}')">
                     <img src="https://image.tmdb.org/t/p/w500${m.poster}" loading="lazy">
                     <div class="card-info"><div class="card-title">${m.title}</div></div>
@@ -70,11 +90,38 @@
         function filterData(type, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const filtered = type === 'all' ? moviesDB : moviesDB.filter(m => m.type === type);
-            renderExplore(filtered);
+            let filtered;
+            if (type === 'all') {
+                filtered = moviesDB;
+            } else if (type === 'movie') {
+                filtered = moviesDB.filter(m => m.type === 'movie');
+            } else if (type === 'tv') {
+                filtered = moviesDB.filter(m => m.type === 'tv');
+            } else if (type.startsWith('genre-')) {
+                const genreId = parseInt(type.split('-')[1]);
+                filtered = moviesDB.filter(m => m.genres && m.genres.includes(genreId));
+            }
+            currentList = filtered.sort((a,b) => b.release_year - a.release_year);
+            loadedCount = 12;
+            renderExplore();
         }
+
+        function loadMore() {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+                loadedCount += 12;
+                renderExplore();
+            }
+        }
+
+        window.addEventListener('scroll', loadMore);
 
         initExplore();
     </script>
+
+    <footer style="text-align: center; padding: 20px; color: #a1a1a6; font-size: 0.8rem; margin-top: 50px;">
+        <p>&copy; 2024 Peliskal. Todos los derechos reservados.</p>
+        <p>Datos proporcionados por <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--accent);">The Movie Database (TMDB)</a>.</p>
+        <p><a href="privacy.html">Política de Privacidad</a> | <a href="terms.html">Términos de Servicio</a> | <a href="about.html">Acerca de</a> | <a href="contact.html">Contacto</a></p>
+    </footer>
 </body>
 </html>

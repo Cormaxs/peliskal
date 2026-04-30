@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peliskal | Premium Streaming</title>
+    <meta name="description" content="Peliskal es tu plataforma de streaming gratuita para ver películas y series en HD. Descubre miles de títulos con datos de TMDB.">
+    <meta name="keywords" content="streaming, películas, series, gratis, HD, TMDB, Peliskal">
+    <meta name="author" content="Peliskal">
     <link rel="icon" href="peliskal-logo.webp" type="image/x-icon">
     <style>
         :root {
@@ -159,6 +162,15 @@
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5GHP328QNM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5GHP328QNM');
+</script>
 <body>
 
     <nav id="navbar">
@@ -198,6 +210,51 @@
         </div>
     </div>
 
+    <div class="row">
+        <h2 class="row-title">Acción</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-action')">❮</button>
+            <div class="carousel-track" id="track-action"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-action')">❯</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <h2 class="row-title">Comedia</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-comedy')">❮</button>
+            <div class="carousel-track" id="track-comedy"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-comedy')">❯</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <h2 class="row-title">Drama</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-drama')">❮</button>
+            <div class="carousel-track" id="track-drama"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-drama')">❯</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <h2 class="row-title">Terror</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-horror')">❮</button>
+            <div class="carousel-track" id="track-horror"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-horror')">❯</button>
+        </div>
+    </div>
+
+    <div class="row">
+        <h2 class="row-title">Ciencia Ficción</h2>
+        <div class="carousel-wrapper">
+            <button class="nav-btn prev-btn" onclick="scrollLeftBtn('track-scifi')">❮</button>
+            <div class="carousel-track" id="track-scifi"></div>
+            <button class="nav-btn next-btn" onclick="scrollRightBtn('track-scifi')">❯</button>
+        </div>
+    </div>
+
     <script>
         let moviesDB = [];
         let heroList = [];
@@ -217,6 +274,11 @@
 
                 renderTrack('track-popular', [...moviesDB].sort((a,b) => b.popularity - a.popularity).slice(0, 18));
                 renderTrack('track-recent', [...moviesDB].reverse().slice(0, 18));
+                renderTrack('track-action', moviesDB.filter(m => m.genres && m.genres.includes(28)).sort((a,b) => b.popularity - a.popularity).slice(0, 18));
+                renderTrack('track-comedy', moviesDB.filter(m => m.genres && m.genres.includes(35)).sort((a,b) => b.popularity - a.popularity).slice(0, 18));
+                renderTrack('track-drama', moviesDB.filter(m => m.genres && m.genres.includes(18)).sort((a,b) => b.popularity - a.popularity).slice(0, 18));
+                renderTrack('track-horror', moviesDB.filter(m => m.genres && m.genres.includes(27)).sort((a,b) => b.popularity - a.popularity).slice(0, 18));
+                renderTrack('track-scifi', moviesDB.filter(m => m.genres && m.genres.includes(878)).sort((a,b) => b.popularity - a.popularity).slice(0, 18));
             } catch (e) { console.error(e); }
         }
 
@@ -290,5 +352,11 @@
 
         init();
     </script>
+
+    <footer style="text-align: center; padding: 20px; color: #a1a1a6; font-size: 0.8rem; margin-top: 50px;">
+        <p>&copy; 2024 Peliskal. Todos los derechos reservados.</p>
+        <p>Datos proporcionados por <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--accent);">The Movie Database (TMDB)</a>.</p>
+        <p><a href="privacy.html">Política de Privacidad</a> | <a href="terms.html">Términos de Servicio</a> | <a href="about.html">Acerca de</a> | <a href="contact.html">Contacto</a></p>
+    </footer>
 </body>
 </html>

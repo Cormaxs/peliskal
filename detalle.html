@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peliskal | Reproductor</title>
+    <meta name="description" content="Ve películas y series en HD en Peliskal. Streaming gratuito con servidores múltiples.">
+    <meta name="keywords" content="reproductor, streaming, HD, películas, series, Peliskal">
+    <meta name="author" content="Peliskal">
     <link rel="stylesheet" href="style.css">
-     <link rel="icon" href="peliskal-logo.webp" type="image/x-icon">
+    <link rel="icon" href="peliskal-logo.webp" type="image/x-icon">
     <style>
-        /* Ajustes específicos para la página de detalle */
         .container { max-width: 1200px; margin: 0 auto; padding: 20px 5%; }
         
         .back-link { 
@@ -16,48 +18,97 @@
         }
         .back-link:hover { transform: translateX(-5px); }
 
+        /* Estilos del Reproductor */
+        .video-wrapper {
+            background: #000;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 15px;
+        }
+
         .video-container { 
             position: relative; padding-bottom: 56.25%; height: 0; 
-            background: #000; border-radius: 20px; overflow: hidden;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
-            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px; overflow: hidden;
+            background: #000;
         }
+        
         iframe { position: absolute; top:0; left:0; width:100%; height:100%; border:0; }
 
+        /* Selector de Servidores Premium */
+        .server-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.03);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .server-btn {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .server-btn span { font-size: 0.65rem; opacity: 0.6; font-weight: 400; }
+
+        .server-btn:hover { background: rgba(255,255,255,0.2); }
+        .server-btn.active { background: var(--accent); color: white; }
+
         .info { margin-top: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 40px; }
-        h1 { margin: 0; font-size: 2.5rem; font-weight: 800; }
+        h1 { margin: 0; font-size: 2.5rem; font-weight: 800; letter-spacing: -0.5px; }
         .meta { color: #a1a1a6; margin: 15px 0; font-size: 1.1rem; display: flex; gap: 15px; align-items: center; }
         .overview { line-height: 1.6; color: #d2d2d7; font-size: 1.1rem; max-width: 800px; }
 
+        /* Carrusel */
         .similar-section { margin-top: 50px; }
         .row-title { font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; color: #fff; }
-        
         .carousel-wrapper { position: relative; display: flex; align-items: center; }
         .carousel-track {
             display: flex; overflow-x: auto; scroll-behavior: smooth;
-            gap: 18px; padding: 20px 0; scrollbar-width: none;
+            gap: 18px; padding: 20px 2px; scrollbar-width: none;
         }
         .carousel-track::-webkit-scrollbar { display: none; }
-
         .nav-btn {
             position: absolute; top: 50%; transform: translateY(-50%);
             background: rgba(255,255,255,0.1); color: white; border: none;
             width: 45px; height: 45px; border-radius: 50%; cursor: pointer;
-            z-index: 100; backdrop-filter: blur(10px); transition: 0.3s;
+            z-index: 10; backdrop-filter: blur(10px); transition: 0.3s;
         }
-        .nav-btn:hover { background: var(--accent); }
-        .prev-btn { left: -25px; }
-        .next-btn { right: -25px; }
+        .nav-btn:hover { background: var(--accent); scale: 1.1; }
+        .prev-btn { left: -22px; }
+        .next-btn { right: -22px; }
 
         @media (max-width: 768px) {
             h1 { font-size: 1.8rem; }
             .nav-btn { display: none; }
+            .server-selector { overflow-x: auto; }
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5GHP328QNM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-5GHP328QNM');
+</script>
 <body>
 
-    <!-- NAV UNIFICADA (Igual a Index y Explorar) -->
     <nav id="navbar" class="scrolled">
         <div class="nav-top">
             <a href="index.html" class="logo">PELISKAL</a>
@@ -72,8 +123,26 @@
     <div class="container">
         <a href="index.html" class="back-link">❮ Volver al Inicio</a>
         
-        <div class="video-container">
-            <iframe id="player" src="" allowfullscreen referrerpolicy="origin"></iframe>
+        <div class="video-wrapper">
+            <div class="video-container">
+                <iframe 
+                    id="player" 
+                    src="" 
+                    allowfullscreen 
+                    referrerpolicy="origin"
+                    sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation">
+                </iframe>
+            </div>
+        </div>
+
+        <!-- Selector de Servidores Manual -->
+        <div class="server-selector">
+            <button class="server-btn active" onclick="switchServer('imdb', this)">
+                Servidor Principal <span>IMDB Data</span>
+            </button>
+            <button class="server-btn" onclick="switchServer('tmdb', this)">
+                Servidor Alternativo <span>TMDB Data</span>
+            </button>
         </div>
 
         <div class="info">
@@ -82,7 +151,6 @@
             <p class="overview" id="overview"></p>
         </div>
 
-        <!-- SECCIÓN SIMILARES -->
         <div class="similar-section">
             <h2 class="row-title">También te podría gustar</h2>
             <div class="carousel-wrapper">
@@ -93,11 +161,11 @@
         </div>
     </div>
 
-    <!-- Importamos la lógica central -->
     <script src="main.js"></script>
     
     <script>
         const movie = JSON.parse(localStorage.getItem('currentMovie'));
+        const apiBase = "https://vidapi.ru/embed";
 
         async function initPlayer() {
             if (!movie) {
@@ -105,8 +173,11 @@
                 return;
             }
 
-            // 1. Configurar Info de la Película
+            // Datos de interfaz
             document.title = `${movie.title} | Peliskal`;
+            
+            // Open Graph meta tags para compartir
+            updateMetaTags(movie);
             document.getElementById('title').innerText = movie.title;
             document.getElementById('overview').innerText = movie.overview;
             document.getElementById('meta').innerHTML = `
@@ -117,20 +188,44 @@
                 </span>
             `;
             
-            // 2. Cargar Iframe (Película o Serie)
-            const url = movie.type === 'movie'
-                ? `https://streamimdb.ru/embed/movie/${movie.id_imdb}`
-                : `https://streamimdb.ru/tv/${movie.id_imdb}/season/1/episode/1`;
+            // Carga inicial (Intentamos IMDB por defecto)
+            const initialSource = (movie.id_imdb && movie.id_imdb.trim() !== "") ? 'imdb' : 'tmdb';
             
-            document.getElementById('player').src = url;
+            // Si IMDB no existe, activamos visualmente el botón de TMDB
+            if (initialSource === 'tmdb') {
+                const btns = document.querySelectorAll('.server-btn');
+                btns[0].classList.remove('active');
+                btns[1].classList.add('active');
+            }
 
-            // 3. Cargar Base de Datos para Buscador y Similares
-            await loadDatabase(); // Función de main.js
+            loadVideo(initialSource);
+
+            await loadDatabase(); 
             renderSimilar();
         }
 
+        function loadVideo(sourceType) {
+            const id = (sourceType === 'imdb' && movie.id_imdb) ? movie.id_imdb : movie.id_tmdb;
+            const settings = "?sub=es&lang=es"; 
+
+            const url = movie.type === 'movie'
+                ? `${apiBase}/movie/${id}${settings}`
+                : `${apiBase}/tv/${id}/1/1${settings}`;
+            
+            document.getElementById('player').src = url;
+            console.log(`Cargando video desde fuente: ${sourceType} (ID: ${id})`);
+        }
+
+        function switchServer(sourceType, btnElement) {
+            // Actualizar UI de botones
+            document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // Recargar Video
+            loadVideo(sourceType);
+        }
+
         function renderSimilar() {
-            // Recomendamos 15 películas al azar (excluyendo la que se está viendo)
             const similar = moviesDB
                 .filter(m => m.id_tmdb !== movie.id_tmdb)
                 .sort(() => 0.5 - Math.random())
@@ -138,7 +233,7 @@
 
             document.getElementById('similar-track').innerHTML = similar.map(m => `
                 <div class="card" style="width: 180px; aspect-ratio: 2/3;" onclick="verDetalle('${m.id_tmdb}')">
-                    <img src="https://image.tmdb.org/t/p/w500${m.poster}" loading="lazy">
+                    <img src="https://image.tmdb.org/t/p/w500${m.poster}" alt="${m.title}" loading="lazy">
                     <div class="card-info">
                         <div class="card-title">${m.title}</div>
                     </div>
@@ -146,12 +241,41 @@
             `).join('');
         }
 
-        function scrollTrack(dir) {
-            const track = document.getElementById('similar-track');
-            track.scrollBy({ left: dir * 450, behavior: 'smooth' });
+        function updateMetaTags(movie) {
+            // Remover meta tags existentes si los hay
+            const existing = document.querySelectorAll('meta[property]');
+            existing.forEach(tag => tag.remove());
+            
+            // Agregar Open Graph tags
+            const metaTags = [
+                { property: 'og:title', content: `${movie.title} | Peliskal` },
+                { property: 'og:description', content: movie.overview.substring(0, 160) + '...' },
+                { property: 'og:image', content: `https://image.tmdb.org/t/p/w500${movie.poster}` },
+                { property: 'og:url', content: window.location.href },
+                { property: 'og:type', content: 'video.movie' },
+                { property: 'og:site_name', content: 'Peliskal' },
+                { name: 'twitter:card', content: 'summary_large_image' },
+                { name: 'twitter:title', content: `${movie.title} | Peliskal` },
+                { name: 'twitter:description', content: movie.overview.substring(0, 160) + '...' },
+                { name: 'twitter:image', content: `https://image.tmdb.org/t/p/w500${movie.poster}` }
+            ];
+            
+            metaTags.forEach(tag => {
+                const meta = document.createElement('meta');
+                if (tag.property) meta.setAttribute('property', tag.property);
+                if (tag.name) meta.setAttribute('name', tag.name);
+                meta.content = tag.content;
+                document.head.appendChild(meta);
+            });
         }
 
         initPlayer();
     </script>
+
+    <footer style="text-align: center; padding: 20px; color: #a1a1a6; font-size: 0.8rem; margin-top: 50px;">
+        <p>&copy; 2024 Peliskal. Todos los derechos reservados.</p>
+        <p>Datos proporcionados por <a href="https://www.themoviedb.org/" target="_blank" style="color: var(--accent);">The Movie Database (TMDB)</a>.</p>
+        <p><a href="privacy.html">Política de Privacidad</a> | <a href="terms.html">Términos de Servicio</a> | <a href="about.html">Acerca de</a> | <a href="contact.html">Contacto</a></p>
+    </footer>
 </body>
 </html>
