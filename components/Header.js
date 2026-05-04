@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image'; // Importación añadida
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { fetchContent } from '../lib/api';
@@ -68,10 +69,18 @@ export default function Header() {
     return (
         <nav className={scrolled ? 'scrolled' : ''}>
             <div className="nav-container">
-                {/* CAMBIO: Texto por Imagen */}
                 <Link href="/" className="logo-container">
-                    <img src="/peliskal-logo.webp" alt="PELISKAL" className="nav-logo-img" />
-                    Peliskal
+                    {/* Corrección: Uso de next/image para el logo */}
+                    <div className="logo-img-wrapper">
+                        <Image 
+                            src="/peliskal-logo.webp" 
+                            alt="PELISKAL" 
+                            width={120} 
+                            height={35} 
+                            priority 
+                            className="nav-logo-img"
+                        />
+                    </div>
                 </Link>
 
                 <div className="search-wrapper" ref={searchRef}>
@@ -90,7 +99,16 @@ export default function Header() {
                         <div className="search-preview">
                             {previewResults.map((movie) => (
                                 <div key={movie._id} className="preview-item" onClick={() => handleSelect(movie)}>
-                                    <img src={`https://image.tmdb.org/t/p/w92${movie.poster}`} alt={movie.title} />
+                                    {/* Corrección: Uso de next/image para posters de previsualización */}
+                                    <div className="poster-preview-wrapper">
+                                        <Image 
+                                            src={`https://image.tmdb.org/t/p/w92${movie.poster}`} 
+                                            alt={movie.title} 
+                                            width={35} 
+                                            height={50}
+                                            className="p-img"
+                                        />
+                                    </div>
                                     <div className="preview-info">
                                         <div className="p-title">{movie.title}</div>
                                         <div className="p-meta">{movie.release_year} • <span>{movie.type === 'tv' ? 'SERIE' : 'PELI'}</span></div>
@@ -98,7 +116,8 @@ export default function Header() {
                                 </div>
                             ))}
                             <div className="view-all-results" onClick={handleViewAll}>
-                                Ver todos para "{searchTerm}"
+                                {/* Corrección: Caracteres especiales escapados */}
+                                Ver todos para &quot;{searchTerm}&quot;
                             </div>
                         </div>
                     )}
@@ -133,21 +152,27 @@ export default function Header() {
                     box-sizing: border-box;
                 }
 
-                /* Estilos para el logo nuevo */
                 .logo-container { 
                     display: flex;
                     align-items: center;
                     text-decoration: none; 
                     flex-shrink: 0;
                 }
-                .nav-logo-img {
-                    height: 35px; /* Ajusta este tamaño según tu logo */
-                    width: auto;
-                    display: block;
+                
+                .logo-img-wrapper {
+                    height: 35px;
+                    display: flex;
+                    align-items: center;
                     transition: transform 0.3s ease;
                 }
-                .logo-container:hover .nav-logo-img {
+                
+                .logo-img-wrapper:hover {
                     transform: scale(1.05);
+                }
+
+                :global(.nav-logo-img) {
+                    height: 35px !important;
+                    width: auto !important;
                 }
 
                 .search-wrapper { 
@@ -181,7 +206,18 @@ export default function Header() {
                 }
                 .preview-item { display: flex; align-items: center; gap: 12px; padding: 10px; cursor: pointer; }
                 .preview-item:hover { background: rgba(255,255,255,0.05); }
-                .preview-item img { width: 35px; height: 50px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+                
+                .poster-preview-wrapper {
+                    flex-shrink: 0;
+                    width: 35px;
+                    height: 50px;
+                    position: relative;
+                }
+                :global(.p-img) {
+                    object-fit: cover;
+                    border-radius: 4px;
+                }
+
                 .p-title { font-size: 0.85rem; font-weight: 500; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 .p-meta { font-size: 0.7rem; color: #86868b; }
                 .view-all-results { padding: 12px; text-align: center; background: rgba(0, 113, 227, 0.1); color: #0071e3; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
@@ -191,7 +227,8 @@ export default function Header() {
 
                 @media (max-width: 600px) {
                     .nav-container { padding: 10px 15px; gap: 10px; }
-                    .nav-logo-img { height: 28px; } /* Logo un poco más pequeño en móvil */
+                    .logo-img-wrapper { height: 28px; }
+                    :global(.nav-logo-img) { height: 28px !important; }
                     .nav-link { font-size: 0.7rem; }
                     .search-wrapper { margin: 0 5px; }
                     input { padding: 8px 12px; font-size: 0.8rem; }

@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import { useState, useEffect } from 'react';
 import { useContent } from '../context/ContentContext';
 import Link from 'next/link';
+import Image from 'next/image'; // Importación añadida
 
 export default function Home({ contentData, currentQuery }) {
     const { setActiveItem } = useContent();
@@ -38,7 +39,6 @@ export default function Home({ contentData, currentQuery }) {
 
     const createSlug = (item) => `${item.title?.toLowerCase().replace(/\s+/g, '-')}-${item.id_tmdb}`;
 
-    // Datos estructurados para Google (JSON-LD)
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "WebSite",
@@ -54,27 +54,21 @@ export default function Home({ contentData, currentQuery }) {
     return (
         <div className="peliskal-theme">
             <Head>
-                {/* SEO Básico */}
                 <title>Peliskal | Ver Películas y Series Online en HD</title>
                 <meta name="description" content="Disfruta de las mejores películas y series de TV en alta definición. Tendencias, estrenos y clásicos en Peliskal, tu plataforma de streaming premium." />
                 <meta name="keywords" content="películas online, ver series gratis, estrenos de cine, Peliskal, streaming HD, series de tv" />
                 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
                 <link rel="canonical" href="https://peliskal.com" />
-<meta charSet="utf-8" />
-                {/* Open Graph / Facebook (Redes Sociales) */}
+                <meta charSet="utf-8" />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content="https://peliskal.com" />
                 <meta property="og:title" content="Peliskal | Premium Streaming de Películas y Series" />
                 <meta property="og:description" content="La mejor experiencia visual. Cientos de títulos disponibles para ver ahora mismo en HD." />
-                <meta property="og:image" content="https://peliskal.com/og-image.jpg" /> {/* Crea esta imagen de 1200x630px */}
-
-                {/* Twitter Cards */}
+                <meta property="og:image" content="https://peliskal.com/og-image.jpg" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="Peliskal | Premium Streaming" />
                 <meta name="twitter:description" content="Mira tus películas y series favoritas en la mejor calidad." />
                 <meta name="twitter:image" content="https://peliskal.com/og-image.jpg" />
-
-                {/* Datos Estructurados */}
                 <script 
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -83,7 +77,6 @@ export default function Home({ contentData, currentQuery }) {
 
             <Header />
 
-            {/* HERO SECTION - Uso de etiquetas semánticas */}
             {!currentQuery && heroList.length > 0 && (
                 <section className="hero" aria-label="Contenido Destacado" style={{ 
                     backgroundImage: `linear-gradient(to right, #040714 20%, transparent 80%), url(https://image.tmdb.org/t/p/original${heroList[currentHeroIdx]?.backdrop})` 
@@ -102,7 +95,6 @@ export default function Home({ contentData, currentQuery }) {
                 </section>
             )}
 
-            {/* SECCIONES DE CARRUSELES */}
             <main className="content-rows">
                 {sections.map((sec, idx) => (
                     sec.data.length > 0 && (
@@ -115,11 +107,16 @@ export default function Home({ contentData, currentQuery }) {
                                         <Link key={item._id} href={`/seeContent/${createSlug(item)}`} passHref legacyBehavior>
                                             <a className="card" onClick={() => setActiveItem(item)}>
                                                 <div className="type-badge">{item.type === 'tv' ? 'Serie' : 'Peli'}</div>
-                                                <img 
-                                                    src={`https://image.tmdb.org/t/p/w342${item.poster}`} 
-                                                    alt={`Ver ${item.title} online`} 
-                                                    loading="lazy" 
-                                                />
+                                                <div className="card-image-wrapper">
+                                                    <Image 
+                                                        src={`https://image.tmdb.org/t/p/w342${item.poster}`} 
+                                                        alt={`Ver ${item.title} online`} 
+                                                        fill
+                                                        sizes="(max-width: 768px) 130px, 180px"
+                                                        className="card-img"
+                                                        loading="lazy"
+                                                    />
+                                                </div>
                                                 <div className="card-overlay">
                                                     <span className="card-title">{item.title}</span>
                                                 </div>
@@ -134,7 +131,6 @@ export default function Home({ contentData, currentQuery }) {
                 ))}
             </main>
 
-            {/* Estilos... (Iguales a los anteriores con mejoras de accesibilidad) */}
             <style jsx global>{`
                 :root {
                     --bg: #040714;
@@ -184,19 +180,31 @@ export default function Home({ contentData, currentQuery }) {
                     position: relative; overflow: hidden; transition: 0.4s;
                 }
                 .card:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-                .card img { width: 100%; height: 100%; object-fit: cover; }
+                
+                /* Estilos para el nuevo contenedor de Image */
+                .card-image-wrapper {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                }
+                :global(.card-img) {
+                    object-fit: cover;
+                }
+
                 .type-badge {
                     position: absolute; top: 8px; right: 8px;
                     background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
                     color: #fff; font-size: 0.6rem; padding: 3px 7px; border-radius: 5px;
                     text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2);
+                    z-index: 5;
                 }
                 .card-overlay {
                     position: absolute; bottom: 0; width: 100%; padding: 15px 5px;
                     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
                     text-align: center;
+                    z-index: 4;
                 }
-                .card-title { font-size: 0.75rem; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .card-title { font-size: 0.75rem; font-weight: 500; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white; }
                 .nav-btn {
                     position: absolute; top: 50%; transform: translateY(-50%);
                     background: rgba(0,0,0,0.5); border: none; color: white;

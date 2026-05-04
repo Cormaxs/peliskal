@@ -9,7 +9,8 @@ export default function DMCA() {
             <Header />
             <main className="content-wrapper">
                 <h1>DMCA / Derechos de Autor</h1>
-                <p>Peliskal cumple con la ley 17 U.S.C. § 512 y la Digital Millennium Copyright Act ("DMCA").</p>
+                {/* Aquí se reemplazaron las " por &quot; */}
+                <p>Peliskal cumple con la ley 17 U.S.C. § 512 y la Digital Millennium Copyright Act (&quot;DMCA&quot;).</p>
                 <p>Es nuestra política responder a cualquier notificación de infracción y tomar las acciones apropiadas. Si su material con derechos de autor ha sido indexado en nuestro sitio y desea que sea removido, debe proporcionarnos una comunicación escrita que detalle la información pertinente.</p>
                 <p>Por favor, envíe su solicitud de retiro a nuestro correo de contacto oficial.</p>
             </main>

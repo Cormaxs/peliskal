@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import Header from '../components/Header';
 import { fetchContent } from '../lib/api'; 
 import { useContent } from '../context/ContentContext';
+import Image from 'next/image'; // 1. Importación necesaria
 
 const createSlug = (item) => `${item.title?.toLowerCase().replace(/\s+/g, '-')}-${item.id_tmdb}`;
 
@@ -116,19 +117,15 @@ export default function Explorar() {
     return (
         <div className="explore-page">
             <Head>
-                {/* SEO Dinámico */}
                 <title>{getPageTitle()}</title>
                 <meta name="description" content={getPageDescription()} />
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={`https://peliskal.com/explorar${filter !== 'all' ? `?filter=${filter}` : ''}`} />
-        <meta charSet="utf-8" />
-                {/* Open Graph / Redes Sociales */}
+                <meta charSet="utf-8" />
                 <meta property="og:title" content={getPageTitle()} />
                 <meta property="og:description" content={getPageDescription()} />
                 <meta property="og:type" content="website" />
                 <meta property="og:image" content="https://peliskal.com/og-catalog-image.jpg" />
-                
-                {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={getPageTitle()} />
                 <meta name="twitter:description" content={getPageDescription()} />
@@ -173,11 +170,16 @@ export default function Explorar() {
                     {displayList.map((m) => (
                         <article key={m._id} className="card" onClick={() => handleSelect(m)}>
                             <div className="type-badge">{m.type === 'tv' ? 'Serie' : 'Peli'}</div>
-                            <img 
-                                src={`https://image.tmdb.org/t/p/w500${m.poster}`} 
-                                alt={`Ver ${m.title} online en Peliskal`} 
-                                loading="lazy" 
-                            />
+                            {/* 2. Reemplazo de img por Image optimizado */}
+                            <div className="image-container">
+                                <Image 
+                                    src={`https://image.tmdb.org/t/p/w500${m.poster}`} 
+                                    alt={`Ver ${m.title} online en Peliskal`} 
+                                    fill
+                                    sizes="(max-width: 768px) 130px, 170px"
+                                    className="poster-image"
+                                />
+                            </div>
                             <div className="card-info">
                                 <h2 className="card-title">{m.title}</h2>
                             </div>
@@ -185,7 +187,7 @@ export default function Explorar() {
                     ))}
                 </section>
 
-                {loading && <div className="loader" box-role="status">Cargando catálogo...</div>}
+                {loading && <div className="loader" role="status">Cargando catálogo...</div>}
                 
                 {!hasMore && displayList.length > 0 && (
                     <div className="end-msg">Has llegado al final del catálogo de {filter}</div>
@@ -193,7 +195,6 @@ export default function Explorar() {
             </main>
 
             <style jsx>{`
-                /* Mantén tus estilos originales, agregué estas clases semánticas */
                 .sr-only {
                     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
                     overflow: hidden; clip: rect(0,0,0,0); border: 0;
@@ -222,7 +223,17 @@ export default function Explorar() {
                     aspect-ratio: 2/3; background: #1a1a1a;
                 }
                 .card:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                .card img { width: 100%; height: 100%; object-fit: cover; }
+                
+                /* Estilos para el nuevo contenedor de Image */
+                .image-container {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                }
+                :global(.poster-image) {
+                    object-fit: cover;
+                }
+
                 .type-badge {
                     position: absolute; top: 10px; right: 10px;
                     background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px);
@@ -234,6 +245,7 @@ export default function Explorar() {
                     position: absolute; bottom: 0; left: 0; width: 100%;
                     padding: 25px 10px 10px;
                     background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+                    z-index: 4;
                 }
                 .card-title { font-size: 0.8rem; font-weight: 500; text-align: center; margin: 0; }
                 .loader, .end-msg { text-align: center; padding: 50px; color: #86868b; font-size: 0.9rem; }

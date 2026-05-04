@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
     const currentYear = new Date().getFullYear();
@@ -7,7 +8,16 @@ export default function Footer() {
         <footer className="main-footer">
             <div className="footer-content">
                 <div className="footer-brand">
-                    <img src="/peliskal-logo.webp" alt="Peliskal" className="footer-logo" />
+                    <div className="logo-container">
+                        <Image 
+                            src="/peliskal-logo.webp" 
+                            alt="Peliskal" 
+                            width={150} 
+                            height={35}
+                            className="footer-logo"
+                            priority={false}
+                        />
+                    </div>
                     <p className="brand-tagline">Tu portal de streaming favorito.</p>
                 </div>
 
@@ -57,11 +67,15 @@ export default function Footer() {
                     min-width: 250px;
                 }
 
-                .footer-logo {
-                    height: 35px;
-                    width: auto;
+                .logo-container {
                     margin-bottom: 15px;
                     opacity: 0.8;
+                }
+
+                /* Ajuste para que el componente Image respete el diseño original */
+                :global(.footer-logo) {
+                    height: 35px !important;
+                    width: auto !important;
                 }
 
                 .brand-tagline {
