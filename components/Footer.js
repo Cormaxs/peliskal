@@ -16,6 +16,7 @@ export default function Footer() {
                             height={35}
                             className="footer-logo"
                             priority={false}
+                            unoptimized
                         />
                     </div>
                     <p className="brand-tagline">Tu portal de streaming favorito.</p>

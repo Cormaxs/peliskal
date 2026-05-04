@@ -115,6 +115,7 @@ export default function Home({ contentData, currentQuery }) {
                                                         sizes="(max-width: 768px) 130px, 180px"
                                                         className="card-img"
                                                         loading="lazy"
+                                                        unoptimized
                                                     />
                                                 </div>
                                                 <div className="card-overlay">

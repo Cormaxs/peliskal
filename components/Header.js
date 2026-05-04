@@ -107,6 +107,7 @@ export default function Header() {
                                             width={35} 
                                             height={50}
                                             className="p-img"
+                                            unoptimized
                                         />
                                     </div>
                                     <div className="preview-info">

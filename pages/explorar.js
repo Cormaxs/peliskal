@@ -178,6 +178,7 @@ export default function Explorar() {
                                     fill
                                     sizes="(max-width: 768px) 130px, 170px"
                                     className="poster-image"
+                                    unoptimized
                                 />
                             </div>
                             <div className="card-info">
