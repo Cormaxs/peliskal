@@ -12,13 +12,17 @@ export default function Home({ contentData, currentQuery }) {
     const [currentHeroIdx, setCurrentHeroIdx] = useState(0);
     const moviesDB = contentData?.movies || [];
 
-    // --- Lógica Dinámica ---
-    // Mezclamos el catálogo para que la Home siempre se vea distinta al recargar
-    const dynamicCatalog = useMemo(() => {
-        return [...moviesDB].sort(() => 0.5 - Math.random());
+    // --- Corrección de Hydration: el random se aplica sólo en el cliente ---
+    // En servidor y primer render usamos el array original (sin mezclar)
+    // Luego, en useEffect, se actualiza con la versión mezclada, sin error de hidratación.
+    const [randomCatalog, setRandomCatalog] = useState(moviesDB);
+
+    useEffect(() => {
+        // Mezclamos el catálogo SOLO en el cliente después del montaje
+        setRandomCatalog([...moviesDB].sort(() => 0.5 - Math.random()));
     }, [moviesDB]);
 
-    const heroList = useMemo(() => dynamicCatalog.slice(0, 10), [dynamicCatalog]);
+    const heroList = useMemo(() => randomCatalog.slice(0, 10), [randomCatalog]);
 
     const GENRES = { 
         action: 28, 
@@ -30,23 +34,23 @@ export default function Home({ contentData, currentQuery }) {
         drama: 18
     };
 
-    const filterByGenre = (id) => dynamicCatalog.filter(m => m.genres?.includes(id)).slice(0, 20);
+    const filterByGenre = (id) => randomCatalog.filter(m => m.genres?.includes(id)).slice(0, 20);
     const recentlyAdded = useMemo(() => [...moviesDB].reverse().slice(0, 20), [moviesDB]);
 
-    // --- Secciones Ampliadas ---
-    const sections = [
+    // --- Secciones Ampliadas (ahora dependen de randomCatalog) ---
+    const sections = useMemo(() => [
         { title: "Recién Agregadas", data: recentlyAdded },
-        { title: "Tendencias para ti", data: dynamicCatalog.slice(10, 30) }, 
-        { title: "Series de TV que te encantarán", data: dynamicCatalog.filter(m => m.type === 'tv').slice(0, 20) },
+        { title: "Tendencias para ti", data: randomCatalog.slice(10, 30) }, 
+        { title: "Series de TV que te encantarán", data: randomCatalog.filter(m => m.type === 'tv').slice(0, 20) },
         { title: "Acción Trepidante", data: filterByGenre(GENRES.action) },
         { title: "Ciencia Ficción y Futuro", data: filterByGenre(GENRES.scifi) },
-        { title: "Joyas Ocultas", data: dynamicCatalog.slice(40, 60) }, 
+        { title: "Joyas Ocultas", data: randomCatalog.slice(40, 60) }, 
         { title: "Terror y Suspenso", data: filterByGenre(GENRES.horror) },
         { title: "Grandes Historias (Drama)", data: filterByGenre(GENRES.drama) },
         { title: "Comedia para reír", data: filterByGenre(GENRES.comedy) },
         { title: "Documentales", data: filterByGenre(GENRES.documentary) },
         { title: "Animación", data: filterByGenre(GENRES.animation) },
-    ];
+    ], [randomCatalog, recentlyAdded, filterByGenre]);
 
     useEffect(() => {
         if (heroList.length > 0) {
@@ -168,7 +172,6 @@ export default function Home({ contentData, currentQuery }) {
             </main>
 
             <style jsx global>{`
-                /* (Se mantiene el mismo CSS optimizado del paso anterior) */
                 :root { --bg: #040714; --accent: #0071e3; --text: #f5f5f7; }
                 body { background-color: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; }
                 .hero { height: 85vh; display: flex; align-items: center; padding: 0 5%; background-size: cover; background-position: center; transition: background-image 0.8s ease-in-out; position: relative; }

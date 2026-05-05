@@ -13,7 +13,7 @@ export default function SeeContentPage({ item: serverItem }) {
 
     const [currentS, setCurrentS] = useState(1);
     const [currentE, setCurrentE] = useState(1);
-    const [currentServer, setCurrentServer] = useState('vidapi'); // Cambiado a vidapi por defecto
+    const [currentServer, setCurrentServer] = useState('vidapi');
 
     useEffect(() => {
         if (!activeItem && serverItem) {
@@ -28,45 +28,62 @@ export default function SeeContentPage({ item: serverItem }) {
         </div>
     );
 
-    const seoTitle = `${item.title} (${item.release_year}) | Peliskal`;
-    const seoDescription = item.overview?.substring(0, 160) || `Ver ${item.title} online en HD con audio español en Peliskal.`;
-    const seoImage = `https://image.tmdb.org/t/p/w780${item.poster}`;
-    const siteUrl = "https://peliskal.com"; 
-
     const currentSeasonData = item.seasons_details?.find(s => s.season_number === parseInt(currentS)) || item.seasons_details?.[0];
     const episodes = currentSeasonData?.episodes || [];
-
-    const getVideoUrl = () => {
-        const settings = "?sub=es&lang=es&muted=0&autoplay=1";
-        
-        const engines = {
-            vidapi: "https://vidapi.ru/embed",
-            unlimplay: "https://unlimplay.com/play/embed"
-        };
-
-        const idTMDB = item.id_tmdb;
-        let idIMDB = item.id_imdb;
-        if (idIMDB && !idIMDB.startsWith('tt')) {
-            idIMDB = `tt${idIMDB}`;
-        }
-
-        switch (currentServer) {
-            case 'unlimplay':
-                return item.type === 'movie'
-                    ? `${engines.unlimplay}/movie/${idTMDB}${settings}`
-                    : `${engines.unlimplay}/tv/${idTMDB}/${currentS}/${currentE}${settings}`;
-
-            default: // 'vidapi'
-                const idParaVidapi = idIMDB || idTMDB;
-                return item.type === 'movie' 
-                    ? `${engines.vidapi}/movie/${idParaVidapi}${settings}` 
-                    : `${engines.vidapi}/tv/${idParaVidapi}/${currentS}/${currentE}${settings}`;
+    
+    // --- Lógica de Navegación de Episodios ---
+    const handleNextEpisode = () => {
+        const nextEp = currentE + 1;
+        const exists = episodes.find(ep => ep.episode_number === nextEp);
+        if (exists) {
+            setCurrentE(nextEp);
+        } else {
+            // Opcional: Podrías saltar a la siguiente temporada aquí
+            console.log("Fin de temporada");
         }
     };
 
+    const handlePrevEpisode = () => {
+        const prevEp = currentE - 1;
+        if (prevEp >= 1) {
+            setCurrentE(prevEp);
+        }
+    };
+    // ------------------------------------------
+
+    const seoTitle = `${item.title} (${item.release_year}) | Ver Online en Peliskal`;
+    const seoDescription = item.overview?.substring(0, 160) || `Ver ${item.title} online en HD en Peliskal.`;
+    const seoImage = `https://image.tmdb.org/t/p/w780${item.poster}`;
+    const siteUrl = "https://peliskal.com";
+    const canonicalUrl = `${siteUrl}${router.asPath}`;
+
+    const getVideoUrl = () => {
+    // Configuraciones para forzar audio y subtítulos en español
+    const settings = "sub=es&lang=es&audio=es&muted=0&autoplay=1";
+    const idTMDB = item.id_tmdb;
+    let idIMDB = item.id_imdb;
+    
+    if (idIMDB && !idIMDB.startsWith('tt')) idIMDB = `tt${idIMDB}`;
+
+    // Servidor Unlimplay (Servidor 2 en tu estado actual)
+    if (currentServer === 'unlimplay') {
+        return item.type === 'movie' 
+            ? `https://unlimplay.com/play/embed/movie/${idTMDB}?${settings}` 
+            : `https://unlimplay.com/play/embed/tv/${idTMDB}/${currentS}/${currentE}?${settings}`;
+    }
+
+    // Servidor Vidapi (Servidor 1 / Default)
+    // Priorizamos IMDB si existe, sino TMDB
+    const idParaVidapi = idIMDB || idTMDB;
+    const typePath = item.type === 'movie' ? 'movie' : 'tv';
+    const epPath = item.type === 'movie' ? '' : `/${currentS}/${currentE}`;
+    
+    return `https://vidapi.ru/embed/${typePath}/${idParaVidapi}${epPath}?${settings}`;
+};
+
     return (
-        <div className="page-wrapper">
-            <Head>
+        <div className="apple-page">
+             <Head>
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
                 <meta name="robots" content="index, follow" />
@@ -85,173 +102,157 @@ export default function SeeContentPage({ item: serverItem }) {
 
             <Header />
 
-            <div className="hero-bg" style={{ backgroundImage: `url(https://image.tmdb.org/t/p/original${item.poster})` }}></div>
+            <div className="ambient-bg">
+                <div className="blur-img" style={{ backgroundImage: `url(https://image.tmdb.org/t/p/original${item.backdrop || item.poster})` }}></div>
+            </div>
 
-            <main className="main-content">
-                <button onClick={() => router.back()} className="back-btn">
-                    ❮ Volver atrás
-                </button>
+            <main className="container">
+                <button onClick={() => router.back()} className="back-btn">❮ Atrás</button>
 
-                <div className="player-section">
-                    <div className="video-card">
-                        <div className="iframe-container">
-                            <iframe 
-                                key={currentServer + currentS + currentE} 
-                                title={item.title}
-                                src={getVideoUrl()} 
-                                allowFullScreen 
-                                allow="autoplay; encrypted-media"
-                                sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
-                            ></iframe>
+                <div className="layout">
+                    <div className="left-side">
+                        <div className="player-wrapper shadow-2xl">
+                            <div className="player-wrapper shadow-2xl">
+    <iframe 
+        key={currentServer + currentS + currentE} 
+        src={getVideoUrl()} 
+        allowFullScreen 
+        allow="autoplay; encrypted-media"
+        referrerPolicy="origin"
+        // El sandbox es vital para bloquear popups de servidores externos
+        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+    ></iframe>
+</div>
+                        </div>
+
+                        <div className="controls-bar glass">
+                            <div className="server-selector">
+                                <button className={currentServer === 'vidapi' ? 'active' : ''} onClick={() => setCurrentServer('vidapi')}>Servidor 1</button>
+                                <button className={currentServer === 'unlimplay' ? 'active' : ''} onClick={() => setCurrentServer('unlimplay')}>Servidor 2</button>
+                            </div>
+                            
+                            {/* BOTONES DE NAVEGACIÓN (Solo si es TV) */}
+                            {item.type === 'tv' && (
+                                <div className="episode-nav">
+                                    <button onClick={handlePrevEpisode} disabled={currentE <= 1} className="nav-btn">
+                                        Anterior
+                                    </button>
+                                    <span className="current-indicator">T{currentS} : E{currentE}</span>
+                                    <button onClick={handleNextEpisode} disabled={currentE >= episodes.length} className="nav-btn">
+                                        Siguiente
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <div className="server-bar">
-                        {[
-                            { 
-                                id: 'vidapi', 
-                                label: 'Principal', 
-                                desc: 'Ideal para Europa/Asia',
-                                icon: '🇺🇸' 
-                            },
-                            { 
-                                id: 'unlimplay', 
-                                label: 'secundario', 
-                                desc: 'Mejor audio en español',
-                                icon: '🇪🇸 ' 
-                            },
-                        ].map((srv) => (
-                            <button 
-                                key={srv.id}
-                                className={currentServer === srv.id ? 'active' : ''} 
-                                onClick={() => setCurrentServer(srv.id)}
-                                title={srv.desc}
-                            >
-                                <span className="srv-icon">{srv.icon}</span>
-                                <div className="btn-text">
-                                    <span className="label">{srv.label}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="details-grid">
-                    <section className="info-side">
-                        <div className="meta-head">
+                    <div className="right-side">
+                        <div className="content-header">
+                            <span className="premium-label">PELISKAL PREMIUM</span>
                             <h1>{item.title}</h1>
-                            <div className="meta-tags">
-                                <span className="year">{item.release_year}</span>
-                                <span className="type-badge">{item.type === 'tv' ? 'SERIE' : 'PELÍCULA'}</span>
-                                <span className="rating">⭐ {item.rating?.toFixed(1)}</span>
+                            <div className="tags">
+                                <span className="tag-star">⭐ {item.rating?.toFixed(1)}</span>
+                                <span className="tag">{item.release_year}</span>
+                                <span className="tag">{item.type === 'tv' ? 'Serie' : 'Película'}</span>
                             </div>
                         </div>
 
-                        <p className="description">{item.overview || "Sinopsis no disponible en este momento."}</p>
-                        
+                        <div className="synopsis-section">
+                            <h3>Sinopsis</h3>
+                            <p>{item.overview || "No hay una descripción disponible para este título."}</p>
+                        </div>
+
+                        <div className="extra-info grid grid-cols-2 gap-4">
+                            <div>
+                                <h4>Géneros</h4>
+                                <p>{item.genres?.map(g => g.name).join(', ') || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <h4>Duración</h4>
+                                <p>{item.runtime ? `${item.runtime} min` : 'N/A'}</p>
+                            </div>
+                        </div>
+
                         {item.type === 'tv' && (
-                            <div className="series-picker">
-                                <div className="picker-header">
-                                    <h3>Temporadas</h3>
+                            <div className="episodes-box glass">
+                                <div className="box-header">
+                                    <h3>Episodios</h3>
                                     <select value={currentS} onChange={(e) => {setCurrentS(e.target.value); setCurrentE(1);}}>
                                         {item.seasons_details?.map(s => (
                                             <option key={s.season_number} value={s.season_number}>Temporada {s.season_number}</option>
                                         ))}
                                     </select>
                                 </div>
-                                
-                                <div className="episodes-grid">
+                                <div className="ep-grid">
                                     {episodes.map(ep => (
                                         <button 
                                             key={ep.episode_number}
-                                            className={currentE === ep.episode_number ? 'ep-card active' : 'ep-card'}
+                                            className={currentE === ep.episode_number ? 'ep-btn active' : 'ep-btn'}
                                             onClick={() => setCurrentE(ep.episode_number)}
                                         >
-                                            EP {ep.episode_number}
+                                            {ep.episode_number}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         )}
-                    </section>
+                    </div>
                 </div>
             </main>
 
             <style jsx>{`
-                .page-wrapper { background: #040714; min-height: 100vh; color: white; position: relative; }
+                .apple-page { background: #000; min-height: 100vh; color: white; position: relative; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+                .ambient-bg { position: fixed; top: 0; width: 100%; height: 100vh; z-index: 0; overflow: hidden; }
+                .blur-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(80px) saturate(1.6); opacity: 0.3; }
                 
-                .hero-bg {
-                    position: fixed; top: 0; left: 0; width: 100%; height: 60vh;
-                    background-size: cover; background-position: center 20%;
-                    mask-image: linear-gradient(to bottom, rgba(0,0,0,1), transparent);
-                    opacity: 0.3; z-index: 0; filter: blur(40px);
-                }
+                .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 100px 25px 50px; }
+                .back-btn { background: none; border: none; color: #0071e3; cursor: pointer; margin-bottom: 20px; font-size: 1rem; transition: 0.2s; }
+                .back-btn:hover { color: white; }
 
-                .main-content { 
-                    position: relative; z-index: 10; 
-                    padding: 120px 5% 50px; 
-                    max-width: 1300px; margin: 0 auto;
-                }
+                .layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 40px; }
 
-                .back-btn {
-                    background: none; border: none;
-                    display: inline-block; margin-bottom: 25px;
-                    color: #86868b; cursor: pointer; font-size: 0.9rem;
-                    transition: 0.3s; font-family: inherit;
-                }
-                .back-btn:hover { color: #0071e3; transform: translateX(-5px); }
+                .player-wrapper { aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+                iframe { width: 100%; height: 100%; border: none; }
 
-                .player-section { margin-bottom: 40px; }
-                .video-card { 
-                    background: #000; border-radius: 16px; overflow: hidden;
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-                    border: 1px solid rgba(255,255,255,0.05);
-                }
-                .iframe-container { position: relative; padding-bottom: 56.25%; height: 0; }
-                iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+                .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
+                
+                .controls-bar { margin-top: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+                .server-selector { display: flex; gap: 10px; }
+                .server-selector button { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+                .server-selector button.active { background: #0071e3; }
 
-                .server-bar { 
-                    display: flex; gap: 10px; margin-top: 15px; 
-                    justify-content: center;
-                }
-                .server-bar button {
-                    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-                    color: #86868b; padding: 8px 20px; border-radius: 20px;
-                    cursor: pointer; font-size: 0.8rem; transition: 0.3s;
-                    display: flex; align-items: center; gap: 8px;
-                }
-                .server-bar button.active { background: #0071e3; color: white; border-color: #0071e3; }
+                .episode-nav { display: flex; align-items: center; gap: 15px; }
+                .nav-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+                .nav-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+                .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+                .current-indicator { font-size: 0.85rem; font-weight: 600; color: #86868b; }
 
-                .details-grid { max-width: 900px; margin-top: 50px; }
-                .meta-head h1 { font-size: 2.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; }
-                .meta-tags { display: flex; gap: 15px; align-items: center; margin: 15px 0; }
-                .year { color: #86868b; font-size: 1.2rem; }
-                .type-badge { background: #333; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
-                .rating { color: #f5c518; font-weight: bold; }
-                .description { color: #d2d2d7; line-height: 1.6; font-size: 1.1rem; }
+                .premium-label { color: #0071e3; font-weight: 800; font-size: 0.7rem; letter-spacing: 1.5px; }
+                h1 { font-size: 3rem; font-weight: 700; margin: 5px 0 15px; letter-spacing: -1px; }
+                .tags { display: flex; gap: 10px; margin-bottom: 25px; }
+                .tag { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; }
+                .tag-star { color: #f5c518; font-weight: bold; }
 
-                .series-picker { margin-top: 40px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; }
-                .picker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-                select { background: #1c1c1e; color: white; border: 1px solid #333; padding: 8px 15px; border-radius: 8px; outline: none; }
+                .synopsis-section { margin-bottom: 30px; }
+                .synopsis-section h3 { font-size: 1.2rem; margin-bottom: 10px; color: #86868b; }
+                .synopsis-section p { line-height: 1.6; color: #d2d2d7; font-size: 1.05rem; }
 
-                .episodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; }
-                .ep-card { 
-                    background: #1c1c1e; border: 1px solid #333; color: white; 
-                    padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.8rem;
-                    text-align: center;
-                }
-                .ep-card:hover { border-color: #0071e3; }
-                .ep-card.active { background: #0071e3; border-color: #0071e3; font-weight: bold; }
+                .extra-info h4 { font-size: 0.8rem; color: #86868b; text-transform: uppercase; margin-bottom: 4px; }
+                .extra-info p { font-size: 0.95rem; margin-bottom: 20px; }
 
-                .loading-screen { 
-                    height: 100vh; display: flex; flex-direction: column; 
-                    align-items: center; justify-content: center; background: #040714; 
-                }
-                .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #0071e3; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-                @keyframes spin { to { transform: rotate(360deg); } }
+                .episodes-box { margin-top: 30px; padding: 20px; }
+                .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+                select { background: #1c1c1e; color: white; border: 1px solid #333; padding: 5px 10px; border-radius: 6px; }
+                
+                .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
+                .ep-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px 0; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+                .ep-btn.active { background: #0071e3; font-weight: bold; }
 
-                @media (max-width: 900px) {
-                    .meta-head h1 { font-size: 1.8rem; }
+                @media (max-width: 1000px) {
+                    .layout { grid-template-columns: 1fr; }
+                    h1 { font-size: 2rem; }
+                    .container { padding-top: 80px; }
+                    .controls-bar { flex-direction: column; gap: 15px; }
                 }
             `}</style>
             <Footer />
@@ -266,7 +267,6 @@ export async function getServerSideProps(context) {
         const data = await fetchContentById(idFromUrl);
         return { props: { item: data || null } };
     } catch (e) {
-        console.error("Error SSR:", e);
         return { props: { item: null } };
     }
 }
