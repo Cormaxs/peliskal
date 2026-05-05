@@ -13,7 +13,7 @@ export default function SeeContentPage({ item: serverItem }) {
 
     const [currentS, setCurrentS] = useState(1);
     const [currentE, setCurrentE] = useState(1);
-    const [currentServer, setCurrentServer] = useState('imdb');
+    const [currentServer, setCurrentServer] = useState('vidapi'); // Cambiado a vidapi por defecto
 
     useEffect(() => {
         if (!activeItem && serverItem) {
@@ -28,42 +28,55 @@ export default function SeeContentPage({ item: serverItem }) {
         </div>
     );
 
-    // --- CONFIGURACIÓN DE SEO DINÁMICO ---
     const seoTitle = `${item.title} (${item.release_year}) | Peliskal`;
     const seoDescription = item.overview?.substring(0, 160) || `Ver ${item.title} online en HD con audio español en Peliskal.`;
     const seoImage = `https://image.tmdb.org/t/p/w780${item.poster}`;
-    const siteUrl = "https://peliskal.com"; // Cambia esto por tu dominio real
+    const siteUrl = "https://peliskal.com"; 
 
     const currentSeasonData = item.seasons_details?.find(s => s.season_number === parseInt(currentS)) || item.seasons_details?.[0];
     const episodes = currentSeasonData?.episodes || [];
 
     const getVideoUrl = () => {
-        const idParaPlayer = (currentServer === 'imdb' && item.id_imdb) ? item.id_imdb : item.id_tmdb;
-        const apiBase = "https://vidapi.ru/embed";
         const settings = "?sub=es&lang=es&muted=0&autoplay=1";
         
-        return item.type === 'movie' 
-            ? `${apiBase}/movie/${idParaPlayer}${settings}` 
-            : `${apiBase}/tv/${idParaPlayer}/${currentS}/${currentE}${settings}`;
+        const engines = {
+            vidapi: "https://vidapi.ru/embed",
+            unlimplay: "https://unlimplay.com/play/embed"
+        };
+
+        const idTMDB = item.id_tmdb;
+        let idIMDB = item.id_imdb;
+        if (idIMDB && !idIMDB.startsWith('tt')) {
+            idIMDB = `tt${idIMDB}`;
+        }
+
+        switch (currentServer) {
+            case 'unlimplay':
+                return item.type === 'movie'
+                    ? `${engines.unlimplay}/movie/${idTMDB}${settings}`
+                    : `${engines.unlimplay}/tv/${idTMDB}/${currentS}/${currentE}${settings}`;
+
+            default: // 'vidapi'
+                const idParaVidapi = idIMDB || idTMDB;
+                return item.type === 'movie' 
+                    ? `${engines.vidapi}/movie/${idParaVidapi}${settings}` 
+                    : `${engines.vidapi}/tv/${idParaVidapi}/${currentS}/${currentE}${settings}`;
+        }
     };
 
     return (
         <div className="page-wrapper">
             <Head>
-                {/* Metadatos Básicos */}
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
                 <meta name="robots" content="index, follow" />
-<meta charSet="utf-8" />
-                {/* Open Graph (Facebook, WhatsApp, Discord) */}
+                <meta charSet="utf-8" />
                 <meta property="og:type" content="video.movie" />
                 <meta property="og:title" content={seoTitle} />
                 <meta property="og:description" content={seoDescription} />
                 <meta property="og:image" content={seoImage} />
                 <meta property="og:url" content={`${siteUrl}${router.asPath}`} />
                 <meta property="og:site_name" content="Peliskal" />
-
-                {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={seoTitle} />
                 <meta name="twitter:description" content={seoDescription} />
@@ -83,6 +96,7 @@ export default function SeeContentPage({ item: serverItem }) {
                     <div className="video-card">
                         <div className="iframe-container">
                             <iframe 
+                                key={currentServer + currentS + currentE} 
                                 title={item.title}
                                 src={getVideoUrl()} 
                                 allowFullScreen 
@@ -93,12 +107,32 @@ export default function SeeContentPage({ item: serverItem }) {
                     </div>
 
                     <div className="server-bar">
-                        <button className={currentServer === 'imdb' ? 'active' : ''} onClick={() => setCurrentServer('imdb')}>
-                            Servidor Principal
-                        </button>
-                        <button className={currentServer === 'tmdb' ? 'active' : ''} onClick={() => setCurrentServer('tmdb')}>
-                            Servidor Espejo
-                        </button>
+                        {[
+                            { 
+                                id: 'vidapi', 
+                                label: 'Principal', 
+                                desc: 'Ideal para Europa/Asia',
+                                icon: '🇺🇸' 
+                            },
+                            { 
+                                id: 'unlimplay', 
+                                label: 'secundario', 
+                                desc: 'Mejor audio en español',
+                                icon: '🇪🇸 ' 
+                            },
+                        ].map((srv) => (
+                            <button 
+                                key={srv.id}
+                                className={currentServer === srv.id ? 'active' : ''} 
+                                onClick={() => setCurrentServer(srv.id)}
+                                title={srv.desc}
+                            >
+                                <span className="srv-icon">{srv.icon}</span>
+                                <div className="btn-text">
+                                    <span className="label">{srv.label}</span>
+                                </div>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
@@ -184,17 +218,16 @@ export default function SeeContentPage({ item: serverItem }) {
                     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
                     color: #86868b; padding: 8px 20px; border-radius: 20px;
                     cursor: pointer; font-size: 0.8rem; transition: 0.3s;
+                    display: flex; align-items: center; gap: 8px;
                 }
                 .server-bar button.active { background: #0071e3; color: white; border-color: #0071e3; }
 
                 .details-grid { max-width: 900px; margin-top: 50px; }
-
                 .meta-head h1 { font-size: 2.5rem; font-weight: 800; margin: 0; letter-spacing: -1px; }
                 .meta-tags { display: flex; gap: 15px; align-items: center; margin: 15px 0; }
                 .year { color: #86868b; font-size: 1.2rem; }
                 .type-badge { background: #333; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
                 .rating { color: #f5c518; font-weight: bold; }
-
                 .description { color: #d2d2d7; line-height: 1.6; font-size: 1.1rem; }
 
                 .series-picker { margin-top: 40px; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 16px; }
@@ -205,6 +238,7 @@ export default function SeeContentPage({ item: serverItem }) {
                 .ep-card { 
                     background: #1c1c1e; border: 1px solid #333; color: white; 
                     padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.8rem;
+                    text-align: center;
                 }
                 .ep-card:hover { border-color: #0071e3; }
                 .ep-card.active { background: #0071e3; border-color: #0071e3; font-weight: bold; }
@@ -227,7 +261,6 @@ export default function SeeContentPage({ item: serverItem }) {
 
 export async function getServerSideProps(context) {
     const { id } = context.params;
-    // Extraemos el ID numérico del final del slug (ej: pelicula-nombre-12345)
     const idFromUrl = id.split('-').pop(); 
     try {
         const data = await fetchContentById(idFromUrl);

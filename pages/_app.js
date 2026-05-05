@@ -6,7 +6,7 @@ import { ContentProvider } from '../context/ContentContext';
 // Si tienes estilos globales (como Tailwind, Bootstrap o un global.css), impórtalos aquí
 
 // Tu ID de seguimiento de Google Analytics
-const GA_TRACKING_ID = 'G-15C4M5XHTZ';
+const GA_TRACKING_ID = 'G-5GHP328QNM';
 
 // Tu ID de Google AdSense
 const ADSENSE_PUB_ID = 'ca-pub-5933305559914134';

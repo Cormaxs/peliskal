@@ -79,6 +79,7 @@ export default function Header() {
                             height={35} 
                             priority 
                             className="nav-logo-img"
+                            unoptimized
                         />
                     </div>
                 </Link>
