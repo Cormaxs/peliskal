@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import Footer from '../../components/Footer';
 import { useRouter } from 'next/router';
@@ -15,11 +15,16 @@ export default function SeeContentPage({ item: serverItem }) {
     const [currentE, setCurrentE] = useState(1);
     const [currentServer, setCurrentServer] = useState('vidapi');
 
+    // Sincronización para renderizar nuevo contenido sin recargar la página
     useEffect(() => {
-        if (!activeItem && serverItem) {
-            setItem(serverItem);
+        const newItem = activeItem || serverItem;
+        if (newItem && newItem._id !== item?._id) {
+            setItem(newItem);
+            setCurrentS(1);
+            setCurrentE(1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    }, [serverItem, activeItem]);
+    }, [serverItem, activeItem, item?._id]);
 
     if (!item) return (
         <div className="loading-screen">
@@ -31,15 +36,11 @@ export default function SeeContentPage({ item: serverItem }) {
     const currentSeasonData = item.seasons_details?.find(s => s.season_number === parseInt(currentS)) || item.seasons_details?.[0];
     const episodes = currentSeasonData?.episodes || [];
     
-    // --- Lógica de Navegación de Episodios ---
     const handleNextEpisode = () => {
         const nextEp = currentE + 1;
         const exists = episodes.find(ep => ep.episode_number === nextEp);
         if (exists) {
             setCurrentE(nextEp);
-        } else {
-            // Opcional: Podrías saltar a la siguiente temporada aquí
-            console.log("Fin de temporada");
         }
     };
 
@@ -49,41 +50,36 @@ export default function SeeContentPage({ item: serverItem }) {
             setCurrentE(prevEp);
         }
     };
-    // ------------------------------------------
 
     const seoTitle = `${item.title} (${item.release_year}) | Ver Online en Peliskal`;
     const seoDescription = item.overview?.substring(0, 160) || `Ver ${item.title} online en HD en Peliskal.`;
     const seoImage = `https://image.tmdb.org/t/p/w780${item.poster}`;
     const siteUrl = "https://peliskal.com";
-    const canonicalUrl = `${siteUrl}${router.asPath}`;
 
-    const getVideoUrl = () => {
-    // Configuraciones para forzar audio y subtítulos en español
-    const settings = "sub=es&lang=es&audio=es&muted=0&autoplay=1";
-    const idTMDB = item.id_tmdb;
-    let idIMDB = item.id_imdb;
-    
-    if (idIMDB && !idIMDB.startsWith('tt')) idIMDB = `tt${idIMDB}`;
+    // Memorizamos la URL para que el iframe no parpadee innecesariamente
+    const videoUrl = useMemo(() => {
+        const settings = "sub=es&lang=es&audio=es&muted=0&autoplay=1";
+        const idTMDB = item.id_tmdb;
+        let idIMDB = item.id_imdb;
+        
+        if (idIMDB && !idIMDB.startsWith('tt')) idIMDB = `tt${idIMDB}`;
 
-    // Servidor Unlimplay (Servidor 2 en tu estado actual)
-    if (currentServer === 'unlimplay') {
-        return item.type === 'movie' 
-            ? `https://unlimplay.com/play/embed/movie/${idTMDB}?${settings}` 
-            : `https://unlimplay.com/play/embed/tv/${idTMDB}/${currentS}/${currentE}?${settings}`;
-    }
+        if (currentServer === 'unlimplay') {
+            return item.type === 'movie' 
+                ? `https://unlimplay.com/play/embed/movie/${idTMDB}?${settings}` 
+                : `https://unlimplay.com/play/embed/tv/${idTMDB}/${currentS}/${currentE}?${settings}`;
+        }
 
-    // Servidor Vidapi (Servidor 1 / Default)
-    // Priorizamos IMDB si existe, sino TMDB
-    const idParaVidapi = idIMDB || idTMDB;
-    const typePath = item.type === 'movie' ? 'movie' : 'tv';
-    const epPath = item.type === 'movie' ? '' : `/${currentS}/${currentE}`;
-    
-    return `https://vidapi.ru/embed/${typePath}/${idParaVidapi}${epPath}?${settings}`;
-};
+        const idParaVidapi = idIMDB || idTMDB;
+        const typePath = item.type === 'movie' ? 'movie' : 'tv';
+        const epPath = item.type === 'movie' ? '' : `/${currentS}/${currentE}`;
+        
+        return `https://vidapi.ru/embed/${typePath}/${idParaVidapi}${epPath}?${settings}`;
+    }, [item, currentS, currentE, currentServer]);
 
     return (
         <div className="apple-page">
-             <Head>
+            <Head>
                 <title>{seoTitle}</title>
                 <meta name="description" content={seoDescription} />
                 <meta name="robots" content="index, follow" />
@@ -112,17 +108,14 @@ export default function SeeContentPage({ item: serverItem }) {
                 <div className="layout">
                     <div className="left-side">
                         <div className="player-wrapper shadow-2xl">
-                            <div className="player-wrapper shadow-2xl">
-    <iframe 
-        key={currentServer + currentS + currentE} 
-        src={getVideoUrl()} 
-        allowFullScreen 
-        allow="autoplay; encrypted-media"
-        referrerPolicy="origin"
-        // El sandbox es vital para bloquear popups de servidores externos
-        sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
-    ></iframe>
-</div>
+                            <iframe 
+                                key={item._id + currentServer + currentS + currentE} 
+                                src={videoUrl} 
+                                allowFullScreen 
+                                allow="autoplay; encrypted-media"
+                                referrerPolicy="origin"
+                                sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
+                            ></iframe>
                         </div>
 
                         <div className="controls-bar glass">
@@ -131,7 +124,6 @@ export default function SeeContentPage({ item: serverItem }) {
                                 <button className={currentServer === 'unlimplay' ? 'active' : ''} onClick={() => setCurrentServer('unlimplay')}>Servidor 2</button>
                             </div>
                             
-                            {/* BOTONES DE NAVEGACIÓN (Solo si es TV) */}
                             {item.type === 'tv' && (
                                 <div className="episode-nav">
                                     <button onClick={handlePrevEpisode} disabled={currentE <= 1} className="nav-btn">
@@ -165,7 +157,7 @@ export default function SeeContentPage({ item: serverItem }) {
                         <div className="extra-info grid grid-cols-2 gap-4">
                             <div>
                                 <h4>Géneros</h4>
-                                <p>{item.genres?.map(g => g.name).join(', ') || 'N/A'}</p>
+                                <p>{item.genres?.map(g => g.name || g).join(', ') || 'N/A'}</p>
                             </div>
                             <div>
                                 <h4>Duración</h4>
@@ -203,7 +195,7 @@ export default function SeeContentPage({ item: serverItem }) {
             <style jsx>{`
                 .apple-page { background: #000; min-height: 100vh; color: white; position: relative; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
                 .ambient-bg { position: fixed; top: 0; width: 100%; height: 100vh; z-index: 0; overflow: hidden; }
-                .blur-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(80px) saturate(1.6); opacity: 0.3; }
+                .blur-img { width: 100%; height: 100%; background-size: cover; background-position: center; filter: blur(80px) saturate(1.6); opacity: 0.3; transition: background-image 0.5s ease; }
                 
                 .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 100px 25px 50px; }
                 .back-btn { background: none; border: none; color: #0071e3; cursor: pointer; margin-bottom: 20px; font-size: 1rem; transition: 0.2s; }
@@ -218,7 +210,7 @@ export default function SeeContentPage({ item: serverItem }) {
                 
                 .controls-bar { margin-top: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
                 .server-selector { display: flex; gap: 10px; }
-                .server-selector button { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+                .server-selector button { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: 0.3s; }
                 .server-selector button.active { background: #0071e3; }
 
                 .episode-nav { display: flex; align-items: center; gap: 15px; }
@@ -244,13 +236,15 @@ export default function SeeContentPage({ item: serverItem }) {
                 .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
                 select { background: #1c1c1e; color: white; border: 1px solid #333; padding: 5px 10px; border-radius: 6px; }
                 
-                .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; }
+                .ep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(45px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; }
                 .ep-btn { background: rgba(255,255,255,0.1); border: none; color: white; padding: 10px 0; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
                 .ep-btn.active { background: #0071e3; font-weight: bold; }
 
                 @media (max-width: 1000px) {
                     .layout { grid-template-columns: 1fr; }
-                    h1 { font-size: 2rem; }
+                    .right-side { order: 2; }
+                    .left-side { order: 1; }
+                    h1 { font-size: 2.2rem; }
                     .container { padding-top: 80px; }
                     .controls-bar { flex-direction: column; gap: 15px; }
                 }
